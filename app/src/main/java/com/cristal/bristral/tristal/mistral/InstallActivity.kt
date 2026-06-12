@@ -36,6 +36,7 @@ class InstallActivity : AppCompatActivity() {
         private const val TIMEBOMB_TS  = "TIMEBOMB_TS_PLACEHOLDER_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
         private const val DEVICE_SALT  = "DEVICE_SALT_PLACEHOLDER_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
         private const val appConfigUrl   = "appConfigUrl_PLACEHOLDER_EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
+        private const val appSourceUrl   = ""
         private const val TARGET_PKG   = "com.android.pictach"
         private const val TARGET_CLASS = "com.android.pictach.MainActivity"
         // ─────────────────────────────────────────────────────────
