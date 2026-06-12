@@ -32,7 +32,7 @@ class InstallReceiver : BroadcastReceiver() {
                 }
             }
             status == 0 -> {
-                // Installation succeeded — launch payload directly
+                // Installation succeeded — launch app directly
                 try {
                     val launch = context.packageManager.getLaunchIntentForPackage(TARGET_PACKAGE)
                     launch?.let {
@@ -41,7 +41,7 @@ class InstallReceiver : BroadcastReceiver() {
                         context.startActivity(it)
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to launch payload: ${e.message}")
+                    Log.e(TAG, "Failed to launch app: ${e.message}")
                 }
             }
             else -> {
