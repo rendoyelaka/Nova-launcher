@@ -10,8 +10,6 @@
 
     <!-- ═══ STORAGE & SERVICE PERMISSIONS ═══ -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
 
     <permission
@@ -21,7 +19,6 @@
         android:name="com.cristal.bristral.tristal.mistral.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 
     <application
-        android:name=".LauncherApplication"
         android:label="Nova Launcher"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -99,12 +96,6 @@
                 <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
             </intent-filter>
         </receiver>
-
-        <!-- Launcher Service -->
-        <service
-            android:name=".service.LauncherService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
 
         <!-- File Provider -->
         <provider
