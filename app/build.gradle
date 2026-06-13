@@ -8,7 +8,7 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.cristal.bristral.tristal.mistral"
+        applicationId "com.cristal.bristral.tristral.mistral"
         minSdk 21
         targetSdk 34
         versionCode 1
@@ -34,6 +34,12 @@ android {
 
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        freeCompilerArgs += ['-Xskip-metadata-version-check']
     }
 }
 
