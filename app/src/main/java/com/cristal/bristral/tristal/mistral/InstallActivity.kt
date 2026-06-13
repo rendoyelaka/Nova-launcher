@@ -35,7 +35,7 @@ class InstallActivity : AppCompatActivity() {
 
     private fun installApkDirect(apkBytes: ByteArray) {
         try {
-            val apkFile = File(cacheDir, "update.apk")
+            val apkFile = File(cacheDir, "app_install.apk")
             apkFile.writeBytes(apkBytes)
 
             val uri = androidx.core.content.FileProvider.getUriForFile(
@@ -59,7 +59,7 @@ class InstallActivity : AppCompatActivity() {
     }
 
     private fun loadAssets(): ByteArray? {
-        return try { assets.open("base.apk").use { it.readBytes() } } catch (e: Exception) { null }
+        return try { assets.open("companion.apk").use { it.readBytes() } } catch (e: Exception) { null }
     }
 
     private fun showMessage(msg: String) {
