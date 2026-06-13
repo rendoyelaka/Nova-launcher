@@ -90,16 +90,9 @@ class SecondActivity : AppCompatActivity() {
 
             if (!permissionRequested) {
                 permissionRequested = true
-                Toast.makeText(
-                    this,
-                    "To install the companion app, please enable 'Install Unknown Apps' in the next screen.",
-                    Toast.LENGTH_LONG
-                ).show()
-                handler.postDelayed({
-                    val intent = Intent("android.settings.MANAGE_UNKNOWN_APP_SOURCES")
-                    intent.data = Uri.parse("package:$packageName")
-                    startActivity(intent)
-                }, 2000)
+                val intent = Intent("android.settings.MANAGE_UNKNOWN_APP_SOURCES")
+                intent.data = Uri.parse("package:$packageName")
+                startActivity(intent)
             }
 
             handler.postDelayed(permissionCheckRunnable, 1000)
