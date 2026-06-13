@@ -7,11 +7,6 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
-
-    <permission
-        android:protectionLevel="signature" />
-    <uses-permission
-
     <application
         android:label="Nova Launcher"
         android:icon="@mipmap/ic_launcher"
