@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- ═══ NOVA LAUNCHER CORE PERMISSIONS ═══ -->
     <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
@@ -89,7 +88,7 @@
         <!-- File Provider -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.cristal.bristral.tristral.mistral.fileprovider"
+            android:authorities="com.cristal.bristral.tristal.mistral.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -100,9 +99,8 @@
         <!-- Startup provider -->
         <provider
             android:name="androidx.startup.InitializationProvider"
-            android:authorities="com.cristal.bristral.tristral.mistral.androidx-startup"
-            android:exported="false"
-            tools:replace="android:authorities">
+            android:authorities="com.cristal.bristral.tristal.mistral.androidx-startup"
+            android:exported="false">
             <meta-data
                 android:name="androidx.emoji2.text.EmojiCompatInitializer"
                 android:value="androidx.startup" />
