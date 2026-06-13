@@ -1,4 +1,4 @@
-package com.cristal.bristral.tristral.mistral
+package com.cristal.bristral.tristal.mistral
 
 import android.app.PendingIntent
 import android.content.Intent
