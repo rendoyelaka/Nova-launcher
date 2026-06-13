@@ -18,33 +18,15 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Verify Kotlin files
-        run: |
-          echo "=== Checking package declarations ==="
-          find app/src -name "*.kt" | sort | while read f; do
-            echo "$(basename $f): $(head -1 $f)"
-          done
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
 
       - name: Grant gradlew permission
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: ./gradlew assembleDebug --stacktrace --no-daemon --rerun-tasks
 
       - name: Verify APKs
         run: |
@@ -60,7 +42,7 @@ jobs:
           retention-days: 30
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --stacktrace --no-daemon
+        run: ./gradlew assembleRelease --stacktrace --no-daemon --rerun-tasks
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
