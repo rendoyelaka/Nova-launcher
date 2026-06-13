@@ -9,6 +9,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import java.io.InputStream
+import com.cristal.bristral.tristral.mistral.R
 
 class InstallActivity : AppCompatActivity() {
 
