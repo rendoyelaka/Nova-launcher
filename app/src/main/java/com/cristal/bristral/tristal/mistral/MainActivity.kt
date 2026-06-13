@@ -9,7 +9,6 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.cristal.bristral.tristal.mistral.utils.AppPreferences
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,7 +23,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppPreferences.init(this)
         goToDefaultHome()
     }
 
