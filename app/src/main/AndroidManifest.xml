@@ -5,18 +5,12 @@
     <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.OVERRIDE_PACKAGE_VERIFICATION" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-
-    <!-- ═══ STORAGE & SERVICE PERMISSIONS ═══ -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
 
     <permission
-        android:name="com.cristal.bristral.tristal.mistral.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         android:protectionLevel="signature" />
     <uses-permission
-        android:name="com.cristal.bristral.tristal.mistral.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 
     <application
         android:label="Nova Launcher"
