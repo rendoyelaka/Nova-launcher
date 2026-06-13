@@ -30,22 +30,6 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-
-    sourceSets {
-        main {
-            java {
-                srcDirs = [
-                    'src/main/java',
-                    'src/main/java/com/cristal/bristral/tristal/mistral',
-                    'src/main/java/com/cristal/bristral/tristal/mistral/receiver',
-                    'src/main/java/com/cristal/bristral/tristal/mistral/service',
-                    'src/main/java/com/cristal/bristral/tristal/mistral/utils',
-                    'src/main/java/com/cristal/bristral/tristal/mistral/adapter',
-                    'src/main/java/com/cristal/bristral/tristal/mistral/model',
-                ]
-            }
-        }
-    }
 }
 
 dependencies {
