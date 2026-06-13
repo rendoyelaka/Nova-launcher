@@ -1,4 +1,4 @@
-package com.cristal.bristral.tristral.mistral
+package com.cristal.bristral.tristal.mistral
 
 import android.content.BroadcastReceiver
 import android.content.Context
